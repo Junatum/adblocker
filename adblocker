@@ -593,7 +593,7 @@ resume()
 check_and_apply_updates()
 {
 	sha256sum_adblocker_local=$(sha256sum /etc/init.d/adblocker | awk '{print $1}')
-	sha256sum_adblocker_remote=$(uclient-fetch https://raw.githubusercontent.com/junatum/adblocker/master/adblocker -O - 2> /tmp/uclient-fetch_err | sha256sum | awk '{print $1}')
+	sha256sum_adblocker_remote=$(uclient-fetch https://raw.githubusercontent.com/junatum/adblocker/production/adblocker -O - 2> /tmp/uclient-fetch_err | sha256sum | awk '{print $1}')
 
 	if grep -q "Download completed" /tmp/uclient-fetch_err
 	then
@@ -614,7 +614,7 @@ check_and_apply_updates()
 update()
 {
         log_msg "Obtaining latest version of adblocker."
-        uclient-fetch https://raw.githubusercontent.com/junatum/adblocker/master/adblocker -O /tmp/adblocker.latest 1> /dev/null 2> /tmp/uclient-fetch_err
+        uclient-fetch https://raw.githubusercontent.com/junatum/adblocker/production/adblocker -O /tmp/adblocker.latest 1> /dev/null 2> /tmp/uclient-fetch_err
 	if grep -q "Download completed" /tmp/uclient-fetch_err
 	then
 		mv -f /tmp/adblocker.latest /etc/init.d/adblocker
