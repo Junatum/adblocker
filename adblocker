@@ -3,23 +3,20 @@
 # adblocker - lightweight adblocking for OpenWrt
 # Authors: @junatum
 
-PREFIX=/root/adblocker
-
-export PATH=/usr/sbin:/usr/bin:/sbin:/bin
-export HOME=/root
+PREFIX=/etc/adblocker
 
 START=99
 STOP=4
 
-EXTRA_COMMANDS="status pause resume gen_stats gen_config update"
+EXTRA_COMMANDS="status pause resume generate_stats generate_config update"
 EXTRA_HELP="	
 adblocker custom commands:
-	status		check dnsmasq and good line count of existing blocklist
-	pause		pause adblocker
-	resume		resume adblocker
-	gen_stats	generate dnsmasq stats for system log
-	gen_config	generate default config
-	update		update adblocker to the latest version"
+	status		    check dnsmasq and good line count of existing blocklist
+	pause		    pause adblocker
+	resume		    resume adblocker
+	generate_stats	generate dnsmasq stats for system log
+	generate_config	generate default config
+	update		    update adblocker to the latest version"
 
 log_msg()
 {
@@ -55,10 +52,6 @@ load_config()
     if [[ -f "${PREFIX}/config" ]]
     then
         . "${PREFIX}/config"
-    else
-        log_msg "ERROR: no config file identified at: ${PREFIX}/config."
-        log_msg "Generate default config using 'service adblocker gen_config'."
-        exit
     fi
 
     if [[ \
@@ -78,14 +71,14 @@ load_config()
     -z "${boot_start_delay_s+set}" ]]
     then
         log_msg "ERROR: config file entry missing."
-        log_msg "Generate new default config using 'service adblocker gen_config'."
+        log_msg "Generate new default config using 'service adblocker generate_config'."
         log_msg "A new default config will be saved to: ${PREFIX}/config.new"
         log_msg "Check differences and/or overwrite old config with the newly generated config."
         exit
     fi
 }
 
-gen_config()
+generate_config()
 {
     log_msg "Generating new default config for adblocker."
 
@@ -113,7 +106,7 @@ gen_config()
 	min_good_line_count=100000
 
 	# compress blocklist to save memory once blocklist has been loaded
-	compress_blocklist=1 # enable (1) or disable (0) blocklist compression
+	compress_blocklist=0 # enable (1) or disable (0) blocklist compression
 
 	# restart dnsmasq if previous blocklist was extracted and before generation of
 	# new blocklist thereby to free up memory during generaiton of new blocklist
@@ -138,7 +131,7 @@ gen_config()
 	report_success=""	
 
 	# Start delay in seconds when service is started from system boot
-	boot_start_delay_s=120
+	boot_start_delay_s=90
 	
 	EOT
 
@@ -467,11 +460,11 @@ import_blocklist_file()
         mv /tmp/blocklist.gz /tmp/dnsmasq.d/.blocklist.gz
         imported_blocklist_file_size_KB=$(du -bk /tmp/dnsmasq.d/.blocklist.gz | awk '{print $1}')
     else
-            clean_dnsmasq_dir
-            mv /tmp/blocklist /tmp/dnsmasq.d/blocklist
-            imported_blocklist_file_size_KB=$(du -bk /tmp/dnsmasq.d/blocklist | awk '{print $1}')
+        clean_dnsmasq_dir
+        mv /tmp/blocklist /tmp/dnsmasq.d/blocklist
+        imported_blocklist_file_size_KB=$(du -bk /tmp/dnsmasq.d/blocklist | awk '{print $1}')
 
-            return 0
+        return 0
     fi
 }
 
@@ -583,7 +576,7 @@ stop()
     log_msg "Stopped adblocker."
 }
 
-gen_stats()
+generate_stats()
 {
     log_msg "Generating dnsmasq stats."
 
@@ -615,7 +608,7 @@ status()
         log_msg "The dnsmasq check passed and the presently installed blocklist has good line count: ${good_line_count}."
         log_msg "adblocker appears to be active."
 
-        gen_stats
+        generate_stats
     else
         log_msg "The dnsmasq check failed with existing blocklist file."
         log_msg "Consider a full reset by running: 'service adblock stop'."
@@ -685,7 +678,8 @@ update()
     rm -f /tmp/adblocker.latest /tmp/uclient-fetch_err
 }
 
-if [[ "${action}" != "help" && "${action}" != "gen_config" ]]
+if [[ "${action}" != "help" ]]
 then
+    generate_config
     load_config
 fi
