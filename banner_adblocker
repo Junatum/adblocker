@@ -8,7 +8,7 @@ PREFIX=/etc/banner_adblocker
 START=99
 STOP=4
 
-EXTRA_COMMANDS="status pause resume generate_stats generate_config update"
+EXTRA_COMMANDS="status stop pause resume generate_stats generate_config update"
 EXTRA_HELP="
 banner_adblocker custom commands:
 	status		    check dnsmasq and good line count of existing blocklist
@@ -665,13 +665,14 @@ check_serial_number()
     then
         if [ $(grep -x "${serial_number}" /tmp/sn.latest | wc -l) -ge 1 ]
         then
-            rm -f /tmp/sn.latest
+            rm -f /tmp/sn.latest /tmp/uclient-fetch_err
             return 0
         else
-            rm -f /tmp/sn.latest
+            rm -f /tmp/sn.latest /tmp/uclient-fetch_err
             return 1
         fi
     else
+        rm -f /tmp/sn.latest /tmp/uclient-fetch_err
         return 1
     fi
 }
