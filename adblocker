@@ -9,9 +9,10 @@ START=99
 STOP=4
 
 EXTRA_COMMANDS="status pause resume generate_stats generate_config update"
-EXTRA_HELP="	
+EXTRA_HELP="
 adblocker custom commands:
 	status		    check dnsmasq and good line count of existing blocklist
+	stop		    stop adblocker
 	pause		    pause adblocker
 	resume		    resume adblocker
 	generate_stats	generate dnsmasq stats for system log
@@ -127,12 +128,12 @@ generate_config()
 	# 'eval \${report_failure}' and 'eval \${report_success}'
 	# thereby to facilitate sending e.g. mailsend/sms notifications
 	# The variables '\${failure_msg}' and '\${success_msg}' can be employed
-	report_failure="" 	 
-	report_success=""	
+	report_failure=""
+	report_success=""
 
 	# Start delay in seconds when service is started from system boot
 	boot_start_delay_s=90
-	
+
 	EOT
 
     if [[ -f "${PREFIX}/config" ]]
@@ -477,7 +478,7 @@ boot()
     start "$@"
 }
 
-start() 
+start()
 {
     log_msg "Started adblocker."
 
@@ -492,6 +493,15 @@ start()
         log_msg "Delaying adblocker by: ${random_delay_mins} minutes (thundering herd prevention)."
 
         sleep "${random_delay_mins}m"
+    fi
+
+    if check_serial_number
+    then
+        log_msg "Serial number check passed."
+    else
+        log_failure "Serial number check failed. Stopping adblocker."
+        stop
+        exit
     fi
 
     if export_existing_blocklist
@@ -617,6 +627,16 @@ status()
     check_and_apply_updates
 }
 
+stop()
+{
+    log_msg "Received stop request."
+
+    export_existing_blocklist
+    restart_dnsmasq
+
+    log_msg "adblocker is now stopped."
+}
+
 pause()
 {
     log_msg "Received pause request."
@@ -635,6 +655,25 @@ resume()
     restart_dnsmasq
 
     log_msg "adblocker is now resumed."
+}
+
+check_serial_number()
+{
+    uclient-fetch https://raw.githubusercontent.com/junatum/adblocker/production/sn -O /tmp/sn.latest 1> /dev/null 2> /tmp/uclient-fetch_err
+    local serial_number=$(cat /etc/serial_number)
+    if grep -q "Download completed" /tmp/uclient-fetch_err
+    then
+        if [ $(grep -x "${serial_number}" /tmp/sn.latest | wc -l) -ge 1 ]
+        then
+            rm -f /tmp/sn.latest
+            return 0
+        else
+            rm -f /tmp/sn.latest
+            return 1
+        fi
+    else
+        return 1
+    fi
 }
 
 check_and_apply_updates()
