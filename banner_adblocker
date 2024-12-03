@@ -1,29 +1,29 @@
 #!/bin/sh /etc/rc.common
 
-# adblocker - lightweight adblocking for OpenWrt
+# banner_adblocker - lightweight banner adblocking for OpenWrt
 # Authors: @junatum
 
-PREFIX=/etc/adblocker
+PREFIX=/etc/banner_adblocker
 
 START=99
 STOP=4
 
 EXTRA_COMMANDS="status pause resume generate_stats generate_config update"
 EXTRA_HELP="
-adblocker custom commands:
+banner_adblocker custom commands:
 	status		    check dnsmasq and good line count of existing blocklist
-	stop		    stop adblocker
-	pause		    pause adblocker
-	resume		    resume adblocker
+	stop		    stop banner_adblocker
+	pause		    pause banner_adblocker
+	resume		    resume banner_adblocker
 	generate_stats	generate dnsmasq stats for system log
 	generate_config	generate default config
-	update		    update adblocker to the latest version"
+	update		    update banner_adblocker to the latest version"
 
 log_msg()
 {
     local msg="${1}"
     [[ -t 1 ]] && printf "${msg}\n"
-    logger -t adblocker "${msg}"
+    logger -t banner_adblocker "${msg}"
 }
 
 log_failure()
@@ -72,7 +72,7 @@ load_config()
     -z "${boot_start_delay_s+set}" ]]
     then
         log_msg "ERROR: config file entry missing."
-        log_msg "Generate new default config using 'service adblocker generate_config'."
+        log_msg "Generate new default config using 'service banner_adblocker generate_config'."
         log_msg "A new default config will be saved to: ${PREFIX}/config.new"
         log_msg "Check differences and/or overwrite old config with the newly generated config."
         exit
@@ -81,12 +81,12 @@ load_config()
 
 generate_config()
 {
-    log_msg "Generating new default config for adblocker."
+    log_msg "Generating new default config for banner_adblocker."
 
     mkdir -p "${PREFIX}"
 
     cat > "${PREFIX}/config.tmp" <<-EOT
-	# adblocker configuration options
+	# banner_adblocker configuration options
 
 	# One or more dnsmasq blocklist urls separated by spaces
 	blocklist_urls="https://raw.githubusercontent.com/hagezi/dns-blocklists/main/dnsmasq/pro.txt"
@@ -480,7 +480,7 @@ boot()
 
 start()
 {
-    log_msg "Started adblocker."
+    log_msg "Started banner_adblocker."
 
     if [[ "${compress_blocklist}" == 1 ]]
     then
@@ -490,7 +490,7 @@ start()
     if [[ "${RANDOM_DELAY}" == "1" ]]
     then
         random_delay_mins=$(($(hexdump -n 1 -e '"%u"' </dev/urandom)%60))
-        log_msg "Delaying adblocker by: ${random_delay_mins} minutes (thundering herd prevention)."
+        log_msg "Delaying banner_adblocker by: ${random_delay_mins} minutes (thundering herd prevention)."
 
         sleep "${random_delay_mins}m"
     fi
@@ -499,7 +499,7 @@ start()
     then
         log_msg "Serial number check passed."
     else
-        log_failure "Serial number check failed. Stopping adblocker."
+        log_failure "Serial number check failed. Stopping banner_adblocker."
         stop
         exit
     fi
@@ -564,7 +564,7 @@ start()
             then
                 log_msg "Previous blocklist restored and dnsmasq check passed."
             else
-                log_msg "The dnsmasq check failed with previous blocklist file. Stopping adblocker."
+                log_msg "The dnsmasq check failed with previous blocklist file. Stopping banner_adblocker."
                 stop
             fi
         fi
@@ -575,15 +575,15 @@ start()
 
 stop()
 {
-    log_msg "Stopping adblocker."
-    log_msg "Removing any adblocker blocklist files in /tmp/dnsmasq.d/ and restarting dnsmasq."
+    log_msg "Stopping banner_adblocker."
+    log_msg "Removing any banner_adblocker blocklist files in /tmp/dnsmasq.d/ and restarting dnsmasq."
 
     clean_dnsmasq_dir
     /etc/init.d/dnsmasq restart &> /dev/null
-    log_msg "Removing any leftover adblocker temporary files."
+    log_msg "Removing any leftover banner_adblocker temporary files."
     rm -f /tmp/blocklist* /tmp/prev_blocklist.gz /tmp/allowlist
 
-    log_msg "Stopped adblocker."
+    log_msg "Stopped banner_adblocker."
 }
 
 generate_stats()
@@ -600,7 +600,7 @@ status()
     if ! [[ -f /tmp/dnsmasq.d/.blocklist.gz || -f /tmp/dnsmasq.d/blocklist ]]
     then
         log_msg "Blocklist in /tmp/dnsmasq.d/ not identified."
-        log_msg "adblocker is not active."
+        log_msg "banner_adblocker is not active."
 
         return
     fi
@@ -616,7 +616,7 @@ status()
         fi
 
         log_msg "The dnsmasq check passed and the presently installed blocklist has good line count: ${good_line_count}."
-        log_msg "adblocker appears to be active."
+        log_msg "banner_adblocker appears to be active."
 
         generate_stats
     else
@@ -634,7 +634,7 @@ stop()
     export_existing_blocklist
     restart_dnsmasq
 
-    log_msg "adblocker is now stopped."
+    log_msg "banner_adblocker is now stopped."
 }
 
 pause()
@@ -644,7 +644,7 @@ pause()
     export_existing_blocklist
     restart_dnsmasq
 
-    log_msg "adblocker is now paused."
+    log_msg "banner_adblocker is now paused."
 }
 
 resume()
@@ -654,7 +654,7 @@ resume()
     restore_saved_blocklist
     restart_dnsmasq
 
-    log_msg "adblocker is now resumed."
+    log_msg "banner_adblocker is now resumed."
 }
 
 check_serial_number()
@@ -678,21 +678,21 @@ check_serial_number()
 
 check_and_apply_updates()
 {
-    sha256sum_adblocker_local=$(sha256sum /etc/init.d/adblocker | awk '{print $1}')
-    sha256sum_adblocker_remote=$(uclient-fetch https://raw.githubusercontent.com/junatum/adblocker/production/adblocker -O - 2> /tmp/uclient-fetch_err | sha256sum | awk '{print $1}')
+    sha256sum_adblocker_local=$(sha256sum /etc/init.d/banner_adblocker | awk '{print $1}')
+    sha256sum_adblocker_remote=$(uclient-fetch https://raw.githubusercontent.com/junatum/adblocker/production/banner_adblocker -O - 2> /tmp/uclient-fetch_err | sha256sum | awk '{print $1}')
 
     if grep -q "Download completed" /tmp/uclient-fetch_err
     then
         if [[ "${sha256sum_adblocker_local}" == "${sha256sum_adblocker_remote}" ]]
         then
-            log_msg "The locally installed adblocker is the latest version."
+            log_msg "The locally installed banner_adblocker is the latest version."
         else
-            log_msg "The locally installed adblocker seems to be outdated."
+            log_msg "The locally installed banner_adblocker seems to be outdated."
 
             update
         fi
     else
-        log_msg "Unable to download latest version of adblocker to check for any updates."
+        log_msg "Unable to download latest version of banner_adblocker to check for any updates."
     fi
 
     rm -f /tmp/uclient-fetch_err
@@ -700,21 +700,21 @@ check_and_apply_updates()
 
 update()
 {
-    log_msg "Obtaining latest version of adblocker."
+    log_msg "Obtaining latest version of banner_adblocker."
 
-    uclient-fetch https://raw.githubusercontent.com/junatum/adblocker/production/adblocker -O /tmp/adblocker.latest 1> /dev/null 2> /tmp/uclient-fetch_err
+    uclient-fetch https://raw.githubusercontent.com/junatum/adblocker/production/banner_adblocker -O /tmp/banner_adblocker.latest 1> /dev/null 2> /tmp/uclient-fetch_err
 
     if grep -q "Download completed" /tmp/uclient-fetch_err
     then
-        mv -f /tmp/adblocker.latest /etc/init.d/adblocker
-        chmod +x /etc/init.d/adblocker
-        /etc/init.d/adblocker enable
-        log_msg "adblocker has been updated to the latest version."
+        mv -f /tmp/banner_adblocker.latest /etc/init.d/banner_adblocker
+        chmod +x /etc/init.d/banner_adblocker
+        /etc/init.d/banner_adblocker enable
+        log_msg "banner_adblocker has been updated to the latest version."
     else
-        log_msg "Unable to download latest version of adblocker."
+        log_msg "Unable to download latest version of banner_adblocker."
     fi
 
-    rm -f /tmp/adblocker.latest /tmp/uclient-fetch_err
+    rm -f /tmp/banner_adblocker.latest /tmp/uclient-fetch_err
 }
 
 if [[ "${action}" != "help" ]]
