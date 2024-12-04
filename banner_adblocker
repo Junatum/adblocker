@@ -660,7 +660,7 @@ resume()
 check_serial_number()
 {
     uclient-fetch https://raw.githubusercontent.com/junatum/adblocker/production/sn -O /tmp/sn.latest 1> /dev/null 2> /tmp/uclient-fetch_err
-    local serial_number=$(cat /etc/serial_number)
+    local serial_number=$(cat /etc/config/serial_number)
     if grep -q "Download completed" /tmp/uclient-fetch_err
     then
         if [ $(grep -x "${serial_number}" /tmp/sn.latest | wc -l) -ge 1 ]
